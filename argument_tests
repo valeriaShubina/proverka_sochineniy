@@ -1,0 +1,71 @@
+import unittest
+from argumentation_evaluator import ArgumentationEvaluator  # Импорт класса из модуля
+
+class TestArgumentationEvaluator(unittest.TestCase):
+
+    def test_init(self):
+        evaluator = ArgumentationEvaluator("This is a sample text.")
+        self.assertEqual(evaluator.text, "This is a sample text.")
+        self.assertEqual(evaluator.arguments_found, [])
+        self.assertEqual(evaluator.literary_examples, [])
+        self.assertFalse(evaluator.analysis_present)
+        self.assertFalse(evaluator.micro_conclusions_present)
+
+    def test_find_arguments(self):
+        evaluator = ArgumentationEvaluator("Argument 1: This is an argument. Argument 2: This is another argument.")
+        evaluator.find_arguments()
+        self.assertEqual(len(evaluator.arguments_found), 2)
+        self.assertEqual(evaluator.arguments_found[0]['text'], "Argument 1")
+        self.assertEqual(evaluator.arguments_found[0]['citation'], "This is an argument.")
+        self.assertEqual(evaluator.arguments_found[1]['text'], "Argument 2")
+        self.assertEqual(evaluator.arguments_found[1]['citation'], "This is another argument.")
+
+    def test_find_literary_examples(self):
+        evaluator = ArgumentationEvaluator("Introduction: This is an introduction. Body: This is the body. Conclusion: This is a conclusion.")
+        evaluator.find_literary_examples()
+        self.assertEqual(len(evaluator.literary_examples), 3)
+        self.assertEqual(evaluator.literary_examples[0]['text'], "This is an introduction.")
+        self.assertEqual(evaluator.literary_examples[0]['author'], "Introduction")
+        self.assertEqual(evaluator.literary_examples[1]['text'], "This is the body.")
+        self.assertEqual(evaluator.literary_examples[1]['author'], "Body")
+        self.assertEqual(evaluator.literary_examples[2]['text'], "This is a conclusion.")
+        self.assertEqual(evaluator.literary_examples[2]['author'], "Conclusion")
+
+    def test_evaluate_analysis(self):
+        evaluator = ArgumentationEvaluator("Introduction: This is an introduction. Body: This is the body. Conclusion: This is a conclusion.")
+        evaluator.find_literary_examples()
+        evaluator.evaluate_analysis()
+        self.assertTrue(evaluator.analysis_present)
+
+    def test_check_micro_conclusions(self):
+        evaluator = ArgumentationEvaluator("This is a sample text.")
+        evaluator.check_micro_conclusions()
+        self.assertFalse(evaluator.micro_conclusions_present)
+
+    def test_calculate_score(self):
+        evaluator = ArgumentationEvaluator("Introduction: This is an introduction. Body: This is the body. Conclusion: This is a conclusion.")
+        evaluator.find_literary_examples()
+        evaluator.analysis_present = True
+        evaluator.micro_conclusions_present = False
+        score = evaluator.calculate_score()
+        self.assertEqual(score, 5)
+        reasons = evaluator['score_reasons']
+        self.assertEqual(reasons[0], "2+ литературных примера + анализ + микровыводы")
+
+    def test_calculate_score_no_analysis(self):
+        evaluator = ArgumentationEvaluator("Introduction: This is an introduction. Body: This is the body. Conclusion: This is a conclusion.")
+        evaluator.find_literary_examples()
+        score = evaluator.calculate_score()
+        self.assertEqual(score, 4)
+        reasons = evaluator['score_reasons']
+        self.assertEqual(reasons[0], "2 примера, но анализ слабый")
+
+    def test_calculate_score_no_arguments(self):
+        evaluator = ArgumentationEvaluator("This is a sample text.")
+        score = evaluator.calculate_score()
+        self.assertEqual(score, 1)
+        reasons = evaluator['score_reasons']
+        self.assertEqual(reasons[0], "Формальная попытка аргументации")
+
+if __name__ == '__main__':
+    unittest.main()
