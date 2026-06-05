@@ -1,0 +1,115 @@
+import re
+from typing import List, Dict
+
+class ArgumentationEvaluator:
+    """
+    Модуль оценки аргументации в сочинениях.
+    
+    Включает в себя функции для нахождения аргументов, литературных примеров,
+    оценки анализа и проверки микровыводов.
+    """
+
+    def __init__(self, text: str):
+        """
+        Инициализация модуля с текстом сочинения.
+        
+        :param text: Текст сочинения для оценки.
+        """
+        self.text = text
+        self.arguments_found = []
+        self.literary_examples = []
+        self.analysis_present = False
+        self.micro_conclusions_present = False
+
+    def find_arguments(self) -> List[Dict]:
+        """
+        Находит аргументы в тексте.
+        
+        :return: Список найденных аргументов с цитатами.
+        """
+        pattern = r'([A-Z][a-z]+): ([^\.]+)\.'
+        matches = re.findall(pattern, self.text)
+        for match in matches:
+            self.arguments_found.append({"text": match[0], "citation": match[1]})
+        return self.arguments_found
+
+    def find_literary_examples(self) -> List[Dict]:
+        """
+        Определяет литературные примеры в тексте.
+        
+        :return: Список найденных литературных примеров с авторами.
+        """
+        pattern = r'([A-Z][a-z]+): ([^\.]+)\.'
+        matches = re.findall(pattern, self.text)
+        for match in matches:
+            if match[0] not in ["Introduction", "Conclusion"]:
+                self.literary_examples.append({"text": f"{match[1]}.", "author": match[0]})
+        return self.literary_examples
+
+    def evaluate_analysis(self) -> bool:
+        """
+        Оценивает качество анализа.
+        
+        :return: True, если анализ presente, False иначе.
+        """
+        # Сортировка по количеству найденных литературных примеров
+        self.literary_examples.sort(key=lambda x: len(x['text']), reverse=True)
+        if len(self.literary_examples) > 1:
+            return True
+        else:
+            return False
+
+    def check_micro_conclusions(self) -> bool:
+        """
+        Проверяет наличие микровыводов.
+        
+        :return: True, если микровыводы present, False иначе.
+        """
+        pattern = r'(\w+): (.*)'
+        matches = re.findall(pattern, self.text)
+        if len(matches) > 0:
+            return True
+        else:
+            return False
+
+    def calculate_score(self) -> int:
+        """
+        Выставляет оценку от 0 до 5.
+        
+        :return: Оценка аргументации.
+        """
+        score = 0
+        if len(self.literary_examples) > 1 and self.analysis_present and self.micro_conclusions_present:
+            score += 5
+        elif len(self.literary_examples) > 1 or self.analysis_present:
+            score += 4
+        elif len(self.literary_examples) == 1 and self.analysis_present:
+            score += 3
+        elif len(self.arguments_found) > 0:
+            score += 2
+        else:
+            score += 1
+
+        reasons = []
+        if score >= 5:
+            reasons.append("2+ литературных примера + анализ + микровыводы")
+        elif score == 4:
+            reasons.append("2 примера, но анализ слабый")
+        elif score == 3:
+            reasons.append("1 литературный пример без анализа")
+        elif score == 2:
+            reasons.append("Есть маркеры аргументации, но нет литературы")
+        elif score == 1:
+            reasons.append("Формальная попытка аргументации")
+        else:
+            reasons.append("Аргументов нет")
+
+        return {
+            "score": score,
+            "score_reasons": reasons,
+            "arguments_found": self.arguments_found,
+            "literary_examples": self.literary_examples,
+            "analysis_present": self.analysis_present,
+            "micro_conclusions_present": self.micro_conclusions_present,
+            "recommendations": f"Повысить качество анализа и добавить более глубоких примеров"
+        }
