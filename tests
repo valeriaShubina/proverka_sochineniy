@@ -1,0 +1,30 @@
+
+    def test_check_errors_number_error(self):
+        text = "11"
+        result = check_errors(text)
+        self.assertEqual(result["score"], 1)
+        self.assertEqual(result["score_reasons"], [{"reason": "предложение", "word": "11"}])
+        self.assertEqual(result["errors_found"], [{"wrong_word": "11", "correct_word": "11", "position": "предложение 1, слова 1"}])
+        self.assertEqual(result["total_errors"], 1)
+        self.assertEqual(result["recommendations"], "Правильно написать '11' в качестве '11'.")
+
+    def test_check_errors_sentence_with_no_error(self):
+        text = "Это предложение без ошибок."
+        result = check_errors(text)
+        self.assertEqual(result["score"], 2)
+        self.assertEqual(result["score_reasons"], [{"reason": "предложение", "word": "Это предложение без ошибок."}])
+        self.assertEqual(result["errors_found"], [])
+        self.assertEqual(result["total_errors"], 0)
+        self.assertEqual(result["recommendations"], "")
+
+    def test_check_errors_sentence_with_multiple_error(self):
+        text = "харошо купаться"
+        result = check_errors(text)
+        self.assertEqual(result["score"], 0)
+        self.assertEqual(result["score_reasons"], [{"reason": "предложение", "word": "харошо"}])
+        self.assertEqual(result["errors_found"], [{"wrong_word": "харошо", "correct_word": "хорошо", "position": "предложение 1, слова 1"}, {"wrong_word": "купаться", "correct_word": 'kupаться', "position": "предложение 2, слова 1"}])
+        self.assertEqual(result["total_errors"], 2)
+        self.assertEqual(result["recommendations"], "Правильно написать 'хорошо' в качестве 'харошо', 'купаться' в качестве 'купаться'.")
+
+if __name__ == '__main__':
+    unittest.main()
