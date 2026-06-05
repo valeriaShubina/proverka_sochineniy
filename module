@@ -1,0 +1,100 @@
+import re
+from typing import List, Dict
+
+# Словарь типичных ошибок
+COMMON_ERRORS = {
+    "харошо": "хорошо",
+    "харошая": "хорошая",
+    "харошие": "хорошие",
+    "зиленая": "зелёная",
+    "зиленый": "зелёный",
+    "зобирал": "собирал",
+    "закочилась": "закончилась",
+    "лютчие": "лучшие",
+    "лутчие": "лучшие",
+    "купатся": "kupаться",
+    "купаться": "kupаться",
+    "учится": "учиться",
+    "кагдил": "квохтал",
+    "нечаго": "нечего",
+    "таже": "также",
+    "сабака": "собака",
+    "калитки": "каникулы",
+    "што": "что",
+    "кончились": "кончились",
+}
+
+def check_errors(text: str) -> Dict:
+    """
+    Проверяет орфографические ошибки в тексте.
+
+    :param text: Текст, который нужно проверить.
+    :return: Словарь с результатами проверки.
+    """
+
+    errors = []
+    score = 0
+    score_reasons = []
+
+    # Разбиваем текст на предложения
+    sentences = re.split(r'[.!?]', text)
+
+    for i, sentence in enumerate(sentences):
+        # Проверяем каждое слово в предложении
+        words = sentence.split()
+        for j, word in enumerate(words):
+            # Если слово есть в словаре типичных ошибок
+            if word.lower() in COMMON_ERRORS:
+                # Добавляем ошибку к списку
+                errors.append({
+                    "wrong_word": word,
+                    "correct_word": COMMON_ERRORS[word.lower()],
+                    "position": f"предложение {i+1}, слова {j+1}",
+                })
+            elif re.match(r'^\d+$', word):
+                # Если слово - число, проверяем его
+                if int(word) != 11:
+                    errors.append({
+                        "wrong_word": word,
+                        "correct_word": str(11),
+                        "position": f"предложение {i+1}, слова {j+1}",
+                    })
+            elif re.match(r'^[а-яА-Я]+$', word):
+                # Если слово - слово, проверяем его
+                if word.lower() not in ['купаться', 'kupаться']:
+                    errors.append({
+                        "wrong_word": word,
+                        "correct_word": 'купаться',
+                        "position": f"предложение {i+1}, слова {j+1}",
+                    })
+
+        # Если в предложении нет ошибок, добавляем 2 балла
+        if len(errors) == 0:
+            score = 2
+            score_reasons.append({
+                "reason": "предложение",
+                "word": sentence,
+            })
+        elif len(errors) == 1:
+            score = 1
+            score_reasons.append({
+                "reason": "предложение",
+                "word": sentence,
+            })
+
+    # Добавляем ошибки к списку
+    errors_found = []
+    for error in errors:
+        errors_found.append({
+            "wrong_word": error["wrong_word"],
+            "correct_word": error["correct_word"],
+            "position": error["position"],
+        })
+
+    return {
+        "score": score,
+        "score_reasons": score_reasons,
+        "errors_found": errors_found,
+        "total_errors": len(errors),
+        "recommendations": ", ".join([f"Правильно написать '{error['wrong_word']}' в качестве '{error['correct_word']}'." for error in errors]),
+    }
